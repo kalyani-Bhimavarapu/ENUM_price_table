@@ -1,27 +1,45 @@
-const Nightmare = require('nightmare')
+var Nightmare = require('nightmare')
+var vo = require('vo')
 const cheerio = require('cheerio');
 
-const nightmare = Nightmare({ show: true })
-const url = 'https://enam.gov.in/web/dashboard/trade-data';
+vo(run)(function(err, result) {
+  if (err) throw err
 
-nightmare
-  .goto(url)
+  result.forEach(function (text) {
+    console.log('#enamHome > section.container-fuild.content-section.emandi-sec > div > div > div.row > div.col-md-12.table-responsive: ', text)
+  })
+})
+
+function *run() {
+  var nightmare = Nightmare();
+  yield nightmare
+  .goto('https://enam.gov.in/web/dashboard/trade-data')
   .wait('body')
   .select('select[id="min_max_state"]','276')
   .wait(500)
   .select('input[id="min_max_apmc_from_date"]','2021-03-01')
- .wait(200)
- .select('input[id="min_max_apmc_to_date"]','2021-03-01')
+  .wait(200)
+  .select('input[id="min_max_apmc_to_date"]','2021-03-01')
   .click('#refresh')
-  .wait(1000)
-  .evaluate(() => document.querySelector('#enamHome > section.container-fuild.content-section.emandi-sec > div > div > div.row > div.col-md-12.table-responsive').innerHTML)
-  .end()
-  .then(response => {
+
+  for (var i = 0; i < 13; i++) {
+    yield nightmare
+     .goto('https://enam.gov.in/web/dashboard/trade-data')
+     .wait(500)
+     .select('select[ form-control mandi-pagi]','i')
+     .wait(500)
+      .evaluate(function(){
+        return $('#enamHome > section.container-fuild.content-section.emandi-sec > div > div > div.row > div.col-md-12.table-responsive'.innerHTML)
+      })
+  }
+
+  yield nightmare.end().then(response => {
     console.log(getData(response));
   }).catch(err => {
     console.log(err);
 
   });
+}
  
 let getData = html => {
   data = [];
