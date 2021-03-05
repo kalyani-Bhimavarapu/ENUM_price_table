@@ -1,54 +1,42 @@
-var Nightmare = require('nightmare')
-var vo = require('vo')
+var Nightmare = require('nightmare');
+
 const cheerio = require('cheerio');
 
-vo(run)(function(err, result) {
-  if (err) throw err
 
-  result.forEach(function (text) {
-    console.log('#enamHome > section.container-fuild.content-section.emandi-sec > div > div > div.row > div.col-md-12.table-responsive: ', text)
-  })
-})
+function getNightmare(checkbox) {
+    var nightmare = Nightmare({show: true});
+    return nightmare
+    .goto('https://enam.gov.in/web/dashboard/trade-data')
+    .wait('body')
+    .select('select[id="min_max_state"]','276')
+    .wait(500)
+    .select('input[id="min_max_apmc_from_date"]','2021-03-01')
+    .wait(200)
+    .select('input[id="min_max_apmc_to_date"]','2021-03-01')
+    .click('#refresh')
+    .wait(500)
+    .select('select[id="min_max_no_of_list"]',checkbox)
+     .evaluate(function() {
+      return document.querySelector('#enamHome > section.container-fuild.content-section.emandi-sec > div > div > div.row > div.col-md-12.table-responsive').innerHTML;
+       })
 
-function *run() {
-  var nightmare = Nightmare();
-  yield nightmare
-  .goto('https://enam.gov.in/web/dashboard/trade-data')
-  .wait('body')
-  .select('select[id="min_max_state"]','276')
-  .wait(500)
-  .select('input[id="min_max_apmc_from_date"]','2021-03-01')
-  .wait(200)
-  .select('input[id="min_max_apmc_to_date"]','2021-03-01')
-  .click('#refresh')
+}
 
-  for (var i = 0; i < 13; i++) {
-    yield nightmare
-     .goto('https://enam.gov.in/web/dashboard/trade-data')
-     .wait(500)
-     .select('select[ form-control mandi-pagi]','i')
-     .wait(500)
-      .evaluate(function(){
-        return $('#enamHome > section.container-fuild.content-section.emandi-sec > div > div > div.row > div.col-md-12.table-responsive'.innerHTML)
-      })
+getNightmare(5).then(printLog)
+getNightmare(1).then(printLog)
+
+
+      
+function printLog(data){
+  console.log(getData(data));
   }
 
-  yield nightmare.end().then(response => {
-    console.log(getData(response));
-  }).catch(err => {
-    console.log(err);
 
-  });
-}
- 
 let getData = html => {
   data = [];
   const $ = cheerio.load(html);
   const table = $('#data_list > tr');
-       console.log(table.length);
-
-       const result = [];
-
+  
        table.each(function () {
          const State = $(this).find('td:nth-child(1)').text();
          const APMCs = $(this).find('td:nth-child(2)').text();
@@ -61,23 +49,25 @@ let getData = html => {
          const Unit = $(this).find('td:nth-child(9)').text();
          const Date = $(this).find('td:nth-child(10)').text();
          						
-         result.push({
-                    State,
-                    APMCs,
-                    Commodity,
-                    MinPrice,
-                    ModalPrice,
-                    MaxPrice,
-                    CommodityArrivals,
-                    CommodityTraded,
-                    Unit,
-                    Date
-               });
-           });
+         data.push({
+            State,
+            APMCs,
+            Commodity,
+            MinPrice,
+            ModalPrice,
+            MaxPrice,
+            CommodityArrivals,
+            CommodityTraded,
+            Unit,
+            Date
+         });
+       });
 
-       console.log(result); 
-
- }
+       
+       return data;
+       
+      }
+                          
           
          
 
